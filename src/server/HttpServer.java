@@ -13,6 +13,7 @@ public class HttpServer {
 
     public static void main(String[] args) {
         HttpServer server = new HttpServer();
+        server.await();
     }
 
     public void await() {
@@ -37,6 +38,14 @@ public class HttpServer {
                 request.parse();
                 Response response = new Response(outputStream);
                 response.setRequest(request);
+                if (request.getUri().startsWith("/servlet/")) {
+                    ServletProcessor processor = new ServletProcessor();
+                    processor.process(request, response);
+                }
+                else {
+                    StaticResourceProcessor processor = new StaticResourceProcessor();
+                    processor.process(request, response);
+                }
                 socket.close();
             }
             catch (IOException e) {
