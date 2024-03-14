@@ -2,10 +2,9 @@ package server;
 
 import org.apache.commons.lang3.text.StrSubstitutor;
 
+import javax.servlet.Servlet;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLStreamHandler;
@@ -22,13 +21,11 @@ public class ServletProcessor {
             "Date: ${ZonedDateTime}\r\n" +
             "\r\n";
 
-    public void process(Request request, Response response) {
+    public void process(HttpRequest request, HttpResponse response) {
         //首先根据uri最后一个/号来定位，后面的字符串认为是servlet名字
         String uri = request.getUri();
         String servletName = uri.substring(uri.lastIndexOf("/") + 1);
         URLClassLoader loader = null;
-        OutputStream output = null;
-
         try {
             // create a URLClassLoader
             URL[] urls = new URL[1];
@@ -41,6 +38,7 @@ public class ServletProcessor {
         catch (IOException e) {
             System.out.println(e.toString());
         }
+        response.setCharacterEncoding("UTF-8");
         //由上面的URLClassLoader加载这个servlet
         Class<?> servletClass = null;
         try {
@@ -49,36 +47,26 @@ public class ServletProcessor {
         catch (ClassNotFoundException e) {
             System.out.println(e.toString());
         }
-        //写响应头
-        output = response.getOutput();
-        String head = composeResponseHead();
+
         try {
-            output.write(head.getBytes("utf-8"));
+            response.sendHeaders();
         }
-        catch (UnsupportedEncodingException e1) {
-            e1.printStackTrace();
-        }
-        catch (IOException e1) {
-            e1.printStackTrace();
+        catch (IOException e) {
+            e.printStackTrace();
         }
         //创建servlet新实例，然后调用service()，由它来写动态内容到响应体
         Servlet servlet = null;
         try {
             servlet = (Servlet) servletClass.newInstance();
-            servlet.service(request, response);
+            HttpRequestFacade requestFacade = new HttpRequestFacade(request);
+            HttpResponseFacade responseFacade = new HttpResponseFacade(response);
+            servlet.service(requestFacade, responseFacade);
         }
         catch (Exception e) {
             System.out.println(e.toString());
         }
         catch (Throwable e) {
             System.out.println(e.toString());
-        }
-
-        try {
-            output.flush();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
         }
 
     }

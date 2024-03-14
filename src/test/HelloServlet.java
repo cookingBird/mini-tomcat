@@ -1,14 +1,12 @@
 package test;
 
-import server.Request;
-import server.Response;
-import server.Servlet;
+import server.*;
 
 import java.io.IOException;
 
 public class HelloServlet implements Servlet {
     @Override
-    public void service(Request request, Response response) throws IOException {
+    public void service(HttpRequest request, HttpResponse response) throws IOException {
         String doc =
                 "<!DOCTYPE html> \n"
                         + "<html>\n"
@@ -17,6 +15,6 @@ public class HelloServlet implements Servlet {
                         + "<h1 align=\"center\">"
                         + "Hello World 你好"
                         + "</h1>\n";
-        response.getOutput().write(doc.getBytes("utf-8"));
+        response.getOutput().write(doc.getBytes("UTF-8"));
     }
 }
